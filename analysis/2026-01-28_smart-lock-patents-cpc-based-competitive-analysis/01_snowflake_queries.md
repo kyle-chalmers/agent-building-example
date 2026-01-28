@@ -1,2 +1,0 @@
-# Snowflake Queries Executed
-
