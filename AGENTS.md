@@ -65,7 +65,7 @@ The USPTO API uses **OR matching by default** for multi-word queries. This cause
    ```python
    # Most accurate method - uses BigQuery with CPC classification
    search_by_cpc("E05B47", min_grant_date="20240101")  # Electronic locks
-   search_by_cpc("E05B47", assignee_filter="ASSA ABLOY")  # Competitor-specific
+   search_by_cpc("E05B47", assignee_filter="[INSERT COMPANY]")  # Competitor-specific
    ```
 
 ### Key CPC Codes for Lock/Access Control
@@ -207,6 +207,22 @@ analysis/2026-01-28_smart-lock-patents/
 - Always create analysis sessions for audit trails
 - Check Snowflake cache before external APIs
 - Log all queries and API calls
+
+## Report Standards
+
+### Competitive Benchmarking
+
+**IMPORTANT**: For all competitive analysis reports, **always compare all numbers/metrics to [INSERT COMPANY]** as the benchmark.
+
+- Include [INSERT COMPANY] patent counts, filing trends, and technology focus in every competitive analysis
+- Use [INSERT COMPANY] as the baseline for comparing competitor activity levels
+- When reporting competitor rankings or activity, show [INSERT COMPANY]'s position relative to others
+- If [INSERT COMPANY] data is not available in search results, explicitly note this in the report
+
+Example report structure:
+- "[INSERT COMPANY]: X patents (baseline)"
+- "Competitor A: Y patents (Z% of [INSERT COMPANY])"
+- "Competitor B: W patents (V% of [INSERT COMPANY])"
 
 ## Setup Verification
 

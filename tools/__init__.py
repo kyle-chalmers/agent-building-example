@@ -36,7 +36,9 @@ from tools.data_loader import (
 )
 
 # Competitors for quick reference (configure for your company)
+# NOTE: ASSA ABLOY is the benchmark - all reports should compare metrics to ASSA ABLOY
 COMPETITORS = [
+    "ASSA ABLOY",  # Benchmark company - compare all metrics to this
     "Allegion",
     "Dormakaba",
     "Spectrum Brands",

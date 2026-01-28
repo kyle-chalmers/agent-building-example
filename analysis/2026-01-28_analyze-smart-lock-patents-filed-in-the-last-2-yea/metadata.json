@@ -1,0 +1,11 @@
+{
+  "request": "Analyze smart lock patents filed in the last 2 years - competitor activity and technology trends",
+  "jira_ticket": null,
+  "jira_url": null,
+  "started_at": "2026-01-28T19:35:24.469382Z",
+  "completed_at": "2026-01-28T19:35:31.693545Z",
+  "status": "complete",
+  "snowflake_query_count": 0,
+  "api_call_count": 4,
+  "analysis_step_count": 3
+}
