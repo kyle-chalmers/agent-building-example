@@ -47,6 +47,8 @@ The USPTO API uses **OR matching by default** for multi-word queries:
 
 **Always use quoted phrases or CPC codes for accurate searches!**
 
+**Full API Reference**: See `docs/USPTO_API_REFERENCE.md` for complete endpoint documentation, query syntax, and response schemas.
+
 ```python
 from tools.patent_search import search_by_assignee, search_by_title, search_by_cpc
 

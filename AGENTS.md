@@ -42,6 +42,8 @@ The USPTO API uses **OR matching by default** for multi-word queries. This cause
 | `"smart lock"` | Exact phrase match | ~200 | ~100% relevant |
 | `smart AND lock AND door` | All terms required | ~80 | ~100% relevant |
 
+**Full API Reference**: See `docs/USPTO_API_REFERENCE.md` for complete endpoint documentation, query syntax, and response schemas.
+
 ### Best Practices for Accurate Searches
 
 1. **Always quote multi-word phrases:**
