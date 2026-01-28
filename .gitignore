@@ -1,5 +1,12 @@
+.env
 __pycache__/
 *.pyc
-.cursor/
+.venv/
 venv/
-.env
+reports/*.md
+!reports/.gitkeep
+CLAUDE.local.md
+.DS_Store
+*.egg-info/
+dist/
+build/
