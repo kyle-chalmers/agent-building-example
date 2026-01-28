@@ -32,6 +32,49 @@ When a search returns many results (>50 patents), ask clarifying questions:
 - Focus on specific technology area?
 - Narrow by keywords?
 
+## CRITICAL: USPTO API Search Query Behavior
+
+The USPTO API uses **OR matching by default** for multi-word queries. This causes significant noise:
+
+| Query | Behavior | Results | Relevance |
+|-------|----------|---------|-----------|
+| `smart lock` | Matches "smart" OR "lock" | ~69,000 | ~10% relevant |
+| `"smart lock"` | Exact phrase match | ~200 | ~100% relevant |
+| `smart AND lock AND door` | All terms required | ~80 | ~100% relevant |
+
+### Best Practices for Accurate Searches
+
+1. **Always quote multi-word phrases:**
+   ```python
+   # BAD - returns noise
+   search_by_title("smart lock")
+
+   # GOOD - precise results
+   search_by_title('"smart lock"')
+   ```
+
+2. **Use Boolean operators for complex queries:**
+   ```python
+   search_by_title('electronic AND lock AND door')
+   search_by_title('lock NOT automotive NOT vehicle')
+   ```
+
+3. **Use CPC codes for highest precision (recommended for competitive analysis):**
+   ```python
+   # Most accurate method - uses BigQuery with CPC classification
+   search_by_cpc("E05B47", min_grant_date="20240101")  # Electronic locks
+   search_by_cpc("E05B47", assignee_filter="ASSA ABLOY")  # Competitor-specific
+   ```
+
+### Key CPC Codes for Lock/Access Control
+
+| Code | Description |
+|------|-------------|
+| E05B47 | Electronic locks (operating/controlling by electric means) |
+| E05B49 | Electric permutation locks |
+| E05B65 | Locks for special use (vehicles, furniture) |
+| G07C9 | Access control systems |
+
 ## Available Tools
 
 ### Python Functions
@@ -40,7 +83,8 @@ When a search returns many results (>50 patents), ask clarifying questions:
 from tools import (
     # Patent search
     search_by_assignee,      # Search by company name
-    search_by_title,         # Search by keywords
+    search_by_title,         # Search by keywords (use quoted phrases!)
+    search_by_cpc,           # Search by CPC code via BigQuery (most precise)
 
     # Snowflake utilities
     build_snowflake_query,   # Generate SQL queries
@@ -67,9 +111,19 @@ from tools import (
 ### Example Usage
 
 ```python
-# Search patents
-from tools import search_by_assignee
+# Search patents - use quoted phrases for keyword searches!
+from tools import search_by_assignee, search_by_title, search_by_cpc
+
+# Assignee search (works well as-is)
 results = search_by_assignee("Allegion", limit=20)
+
+# Keyword search - ALWAYS quote multi-word phrases
+results = search_by_title('"smart lock"', limit=50)  # Good
+results = search_by_title('electronic AND deadbolt', limit=50)  # Good
+
+# CPC search - most precise for competitive analysis
+results = search_by_cpc("E05B47", min_grant_date="20240101")  # All electronic locks
+results = search_by_cpc("E05B47", assignee_filter="Allegion")  # Competitor-specific
 
 # Create analysis with audit trail
 from tools import AnalysisWorkflow

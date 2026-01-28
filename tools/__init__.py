@@ -7,6 +7,7 @@ and analysis workflow functions.
 from tools.patent_search import (
     search_by_assignee,
     search_by_title,
+    search_by_cpc,
     get_patent,
     format_patent_for_storage,
     SAMPLE_PATENTS,
@@ -59,6 +60,7 @@ __all__ = [
     # Patent search functions
     "search_by_assignee",
     "search_by_title",
+    "search_by_cpc",
     "get_patent",
     "format_patent_for_storage",
     "SAMPLE_PATENTS",

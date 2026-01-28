@@ -5,6 +5,37 @@ Fallback: Google Patents API (rate-limited, no key required)
 Last resort: Sample data for demos
 
 API key should be set in environment variable USPTO_API_KEY or .env file.
+
+IMPORTANT - USPTO API Search Query Behavior:
+============================================
+The USPTO API uses OR matching by default for multi-word queries:
+  - "smart lock" matches "smart" OR "lock" → 69,449 results (mostly irrelevant)
+  - '"smart lock"' (quoted) matches exact phrase → 201 results (all relevant)
+
+For precise searches, use these techniques:
+  1. QUOTED PHRASES: Wrap multi-word terms in double quotes
+     - search_by_title('"smart lock"')  → exact phrase match
+     - search_by_title('"electronic deadbolt"')
+
+  2. BOOLEAN OPERATORS: Use AND, OR, NOT
+     - search_by_title('smart AND lock AND door')  → all terms required
+     - search_by_title('lock NOT automotive')  → exclude terms
+
+  3. CPC CODE SEARCHES: For highest precision, use search_by_cpc()
+     - search_by_cpc("E05B47")  → electronic locks specifically
+     - CPC codes eliminate keyword ambiguity entirely
+
+Relevant CPC codes for lock/access control:
+  - E05B: Locks; accessories therefor; handcuffs
+  - E05B47: Operating or controlling locks by electric or magnetic means
+  - E05B49: Electric permutation locks
+  - G07C9: Access control systems
+  - H04L9: Cryptographic mechanisms (for digital credentials)
+
+For authoritative competitive analysis, prefer:
+  1. search_by_cpc() - Most precise, uses BigQuery with CPC codes
+  2. search_by_title() with quoted phrases - Good for specific terms
+  3. search_by_assignee() - Good for company-specific searches
 """
 import json
 import os
@@ -156,6 +187,125 @@ def search_by_title(keywords: str, limit: int = 50) -> list[dict]:
     # Last resort: sample data for demos
     results = _get_sample_data(keywords.lower(), limit)
     return results
+
+
+def search_by_cpc(
+    cpc_code: str,
+    limit: int = 50,
+    country: str = "US",
+    min_grant_date: Optional[str] = None,
+    assignee_filter: Optional[str] = None
+) -> list[dict]:
+    """Search patents by CPC classification code using BigQuery.
+
+    This is the most precise search method for technology-specific queries.
+    Uses Google Patents BigQuery dataset which has harmonized assignee names
+    and comprehensive CPC classification.
+
+    Args:
+        cpc_code: CPC code prefix (e.g., "E05B47" for electronic locks)
+        limit: Maximum number of results to return
+        country: Country code filter (default "US")
+        min_grant_date: Minimum grant date as YYYYMMDD (e.g., "20240101")
+        assignee_filter: Optional assignee name filter (case-insensitive LIKE)
+
+    Returns:
+        List of patent dictionaries
+
+    Common CPC codes for lock/access control:
+        E05B47 - Electronic locks (operating/controlling by electric means)
+        E05B49 - Electric permutation locks
+        E05B65 - Locks for special use (vehicles, furniture)
+        G07C9  - Access control systems
+
+    Example:
+        # All electronic lock patents granted in 2024+
+        results = search_by_cpc("E05B47", min_grant_date="20240101")
+
+        # ASSA ABLOY electronic lock patents
+        results = search_by_cpc("E05B47", assignee_filter="ASSA ABLOY")
+    """
+    import subprocess
+
+    # Build WHERE clauses
+    where_clauses = [
+        f'country_code = "{country}"',
+        f'EXISTS (SELECT 1 FROM UNNEST(cpc) c WHERE c.code LIKE "{cpc_code}%")',
+    ]
+
+    if min_grant_date:
+        where_clauses.append(f"grant_date >= {min_grant_date}")
+
+    if assignee_filter:
+        where_clauses.append(
+            f'EXISTS (SELECT 1 FROM UNNEST(assignee_harmonized) a '
+            f'WHERE LOWER(a.name) LIKE "%{assignee_filter.lower()}%")'
+        )
+
+    where_sql = " AND ".join(where_clauses)
+
+    query = f'''
+SELECT
+    publication_number,
+    title_localized[SAFE_OFFSET(0)].text as title,
+    abstract_localized[SAFE_OFFSET(0)].text as abstract,
+    assignee_harmonized[SAFE_OFFSET(0)].name as assignee,
+    ARRAY_TO_STRING(ARRAY(SELECT name FROM UNNEST(inventor_harmonized)), ", ") as inventors,
+    CAST(FLOOR(filing_date / 10000) AS STRING) || "-" ||
+        LPAD(CAST(MOD(CAST(FLOOR(filing_date / 100) AS INT64), 100) AS STRING), 2, "0") || "-" ||
+        LPAD(CAST(MOD(filing_date, 100) AS STRING), 2, "0") as filing_date,
+    CAST(FLOOR(grant_date / 10000) AS STRING) || "-" ||
+        LPAD(CAST(MOD(CAST(FLOOR(grant_date / 100) AS INT64), 100) AS STRING), 2, "0") || "-" ||
+        LPAD(CAST(MOD(grant_date, 100) AS STRING), 2, "0") as grant_date,
+    ARRAY_TO_STRING(ARRAY(SELECT code FROM UNNEST(cpc) WHERE code LIKE "{cpc_code}%"), ", ") as cpc_codes
+FROM `patents-public-data.patents.publications`
+WHERE {where_sql}
+ORDER BY grant_date DESC
+LIMIT {limit}
+'''
+
+    try:
+        result = subprocess.run(
+            ["bq", "query", "--use_legacy_sql=false", "--format=json", query],
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+
+        if result.returncode != 0:
+            print(f"[BigQuery error: {result.stderr}]")
+            return []
+
+        data = json.loads(result.stdout)
+        patents = []
+
+        for row in data:
+            patents.append({
+                "patent_number": row.get("publication_number", ""),
+                "title": row.get("title", ""),
+                "abstract": row.get("abstract", ""),
+                "assignee": row.get("assignee", ""),
+                "inventors": row.get("inventors", "").split(", ") if row.get("inventors") else [],
+                "filing_date": row.get("filing_date"),
+                "grant_date": row.get("grant_date"),
+                "cpc_codes": row.get("cpc_codes", "").split(", ") if row.get("cpc_codes") else [],
+            })
+
+        print(f"[BigQuery CPC search ({cpc_code}): Found {len(patents)} patents]")
+        return patents
+
+    except subprocess.TimeoutExpired:
+        print("[BigQuery timeout]")
+        return []
+    except FileNotFoundError:
+        print("[bq CLI not found - install Google Cloud SDK]")
+        return []
+    except json.JSONDecodeError as e:
+        print(f"[BigQuery JSON parse error: {e}]")
+        return []
+    except Exception as e:
+        print(f"[BigQuery error: {e}]")
+        return []
 
 
 def get_patent(patent_number: str) -> Optional[dict]:

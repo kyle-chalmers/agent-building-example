@@ -1,0 +1,35 @@
+{
+  "request": "Smart lock patents - CPC-based competitive analysis (E05B47)",
+  "jira_ticket": null,
+  "jira_url": null,
+  "started_at": "2026-01-28T08:16:34.807485Z",
+  "completed_at": "2026-01-28T08:25:00.000000Z",
+  "status": "complete",
+  "snowflake_query_count": 0,
+  "api_call_count": 2,
+  "analysis_step_count": 7,
+  "method": "CPC classification search via BigQuery",
+  "cpc_codes": ["E05B47", "G07C9"],
+  "summary": {
+    "total_patents": 194,
+    "date_range": "2024-01-01 to present",
+    "top_competitors": {
+      "ASSA ABLOY": 10,
+      "Allegion/Schlage": 5,
+      "Dormakaba": 5,
+      "Toyota": 5
+    },
+    "technology_categories": {
+      "Electronic/Digital": 28,
+      "Vehicle Access": 21,
+      "Access Control": 16,
+      "Biometric": 3,
+      "Mobile/Wireless": 3
+    }
+  },
+  "comparison_to_keyword_search": {
+    "keyword_unquoted": {"results": 69449, "relevance": "10%"},
+    "keyword_quoted": {"results": 201, "relevance": "80%"},
+    "cpc_based": {"results": 194, "relevance": "95%"}
+  }
+}
