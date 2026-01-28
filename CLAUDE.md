@@ -44,8 +44,33 @@ The USPTO API uses **OR matching by default** for multi-word queries:
 |-------|----------|---------|-----------|
 | `smart lock` | Matches "smart" OR "lock" | ~69,000 | ~10% relevant |
 | `"smart lock"` | Exact phrase match | ~200 | ~100% relevant |
+| `smart AND lock AND door` | All terms required | ~80 | ~100% relevant |
 
 **Always use quoted phrases or CPC codes for accurate searches!**
+
+### Best Practices for Accurate Searches
+
+1. **Always quote multi-word phrases:**
+   ```python
+   # BAD - returns noise
+   search_by_title("smart lock")
+
+   # GOOD - precise results
+   search_by_title('"smart lock"')
+   ```
+
+2. **Use Boolean operators for complex queries:**
+   ```python
+   search_by_title('electronic AND lock AND door')
+   search_by_title('lock NOT automotive NOT vehicle')
+   ```
+
+3. **Use CPC codes for highest precision (recommended for competitive analysis):**
+   ```python
+   # Most accurate method - uses BigQuery with CPC classification
+   search_by_cpc("E05B47", min_grant_date="20240101")  # Electronic locks
+   search_by_cpc("E05B47", assignee_filter="[INSERT COMPANY]")  # Competitor-specific
+   ```
 
 **Full API Reference**: See `docs/USPTO_API_REFERENCE.md` for complete endpoint documentation, query syntax, and response schemas.
 
@@ -76,9 +101,12 @@ results = search_by_cpc("E05B47", assignee_filter="Allegion")  # Competitor-spec
 
 | Code | Description |
 |------|-------------|
+| E05B | Locks (general) |
 | E05B47 | Electronic locks (operating/controlling by electric means) |
 | E05B49 | Electric permutation locks |
-| E05B65 | Locks for special use |
+| E05B65 | Locks for special use (vehicles, furniture) |
+| E05C | Door closers |
+| E05F | Door openers |
 | G07C9 | Access control systems |
 
 **Return format** (list of dicts):
@@ -380,6 +408,11 @@ Choose straightforward solutions over complex ones.
 ### YAGNI (You Aren't Gonna Need It)
 Implement features only when needed, not speculatively.
 
+### Analysis Guidelines
+- Always create analysis sessions for audit trails
+- Check Snowflake cache before external APIs
+- Log all queries and API calls
+
 ## Permission Hierarchy
 
 **No Permission Required:**
@@ -438,7 +471,11 @@ Snowflake MCP tools are available for direct database operations:
 
 **Note:** Use `ToolSearch` to load these tools before first use:
 ```
+# Snowflake tools
 ToolSearch query: "+snowflake query"
+
+# Atlassian/Jira tools
+ToolSearch query: "+atlassian jira"
 ```
 
 ## Key Commands
@@ -472,6 +509,40 @@ patent-intelligence/
 ├── .env                      # API keys (USPTO_API_KEY required)
 ├── .env.example              # Template for .env file
 └── CLAUDE.md                 # This file
+```
+
+## Report Standards
+
+### Competitive Benchmarking
+
+**IMPORTANT**: For all competitive analysis reports, **always compare all numbers/metrics to [INSERT COMPANY]** as the benchmark.
+
+- Include [INSERT COMPANY] patent counts, filing trends, and technology focus in every competitive analysis
+- Use [INSERT COMPANY] as the baseline for comparing competitor activity levels
+- When reporting competitor rankings or activity, show [INSERT COMPANY]'s position relative to others
+- If [INSERT COMPANY] data is not available in search results, explicitly note this in the report
+
+Example report structure:
+- "[INSERT COMPANY]: X patents (baseline)"
+- "Competitor A: Y patents (Z% of [INSERT COMPANY])"
+- "Competitor B: W patents (V% of [INSERT COMPANY])"
+
+## Setup Verification
+
+Before running patent searches, verify configuration:
+
+```bash
+# 1. Check USPTO API key is configured
+python3 -c "from tools.patent_search import _get_api_key; print('API Key:', 'OK' if _get_api_key() else 'MISSING')"
+
+# 2. Test USPTO API search
+python3 -c "from tools import search_by_assignee; print(search_by_assignee('Allegion', 3))"
+
+# 3. Check Snowflake connection (requires snow CLI configured)
+snow sql -q "SELECT COUNT(*) FROM SNOWFLAKE_LEARNING_DB.PATENT_INTELLIGENCE.PATENTS"
+
+# 4. Load/refresh Snowflake cache if needed
+python3 -c "from tools import load_all_competitors; load_all_competitors(20, execute=True)"
 ```
 
 ## Git Workflow
