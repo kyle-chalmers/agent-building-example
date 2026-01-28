@@ -39,6 +39,13 @@ from tools import (
     build_upsert_query,      # Generate MERGE statements
     is_cache_stale,          # Check cache freshness
 
+    # Data loading (batch operations)
+    load_competitor_patents,   # Load one company's patents to Snowflake
+    load_all_competitors,      # Load all tracked competitors
+    load_technology_patents,   # Load patents by keyword
+    load_all_technologies,     # Load all tracked technologies
+    get_create_table_sql,      # Get CREATE TABLE statement
+
     # Analysis workflow
     AnalysisWorkflow,        # Session management with audit trail
     generate_report_markdown, # Report generation
@@ -86,13 +93,15 @@ python3 -m pytest tests/ -v
 │   ├── __init__.py           # Public exports
 │   ├── patent_search.py      # USPTO/Google Patents API
 │   ├── snowflake_queries.py  # SQL builders + cache
-│   └── analysis_workflow.py  # Session management
+│   ├── analysis_workflow.py  # Session management
+│   └── data_loader.py        # Batch loading utilities
 ├── analysis/                 # Analysis outputs (timestamped folders)
 ├── reports/                  # Generated reports
 ├── tests/                    # Unit tests
 ├── docs/                     # Documentation
 │   └── GOOGLE_PATENTS_BIGQUERY_ERD.md
-└── .env                      # API keys (not committed)
+├── .env                      # API keys (USPTO_API_KEY required)
+└── .env.example              # Template for .env
 ```
 
 ## Analysis Output Structure
@@ -134,3 +143,33 @@ analysis/2026-01-28_smart-lock-patents/
 - Always create analysis sessions for audit trails
 - Check Snowflake cache before external APIs
 - Log all queries and API calls
+
+## Setup Verification
+
+Before running patent searches, verify configuration:
+
+```bash
+# 1. Check USPTO API key is configured
+python3 -c "from tools.patent_search import _get_api_key; print('API Key:', 'OK' if _get_api_key() else 'MISSING')"
+
+# 2. Test USPTO API search
+python3 -c "from tools import search_by_assignee; print(search_by_assignee('Allegion', 3))"
+
+# 3. Check Snowflake connection (requires snow CLI configured)
+snow sql -q "SELECT COUNT(*) FROM SNOWFLAKE_LEARNING_DB.PATENT_INTELLIGENCE.PATENTS"
+
+# 4. Load/refresh Snowflake cache if needed
+python3 -c "from tools import load_all_competitors; load_all_competitors(20, execute=True)"
+```
+
+## MCP Tools
+
+Use `ToolSearch` to load deferred MCP tools before use:
+
+```
+# Snowflake tools
+ToolSearch query: "+snowflake query"
+
+# Atlassian/Jira tools
+ToolSearch query: "+atlassian jira"
+```

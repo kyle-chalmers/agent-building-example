@@ -26,6 +26,14 @@ from tools.analysis_workflow import (
     generate_report_markdown,
 )
 
+from tools.data_loader import (
+    load_competitor_patents,
+    load_technology_patents,
+    load_all_competitors,
+    load_all_technologies,
+    get_create_table_sql,
+)
+
 # ASSA ABLOY competitors for quick reference
 COMPETITORS = [
     "Allegion",
@@ -64,6 +72,12 @@ __all__ = [
     "AnalysisWorkflow",
     "create_session_dir",
     "generate_report_markdown",
+    # Data loader
+    "load_competitor_patents",
+    "load_technology_patents",
+    "load_all_competitors",
+    "load_all_technologies",
+    "get_create_table_sql",
     # Constants
     "COMPETITORS",
     "TECHNOLOGIES",

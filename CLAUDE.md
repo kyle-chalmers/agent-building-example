@@ -82,6 +82,49 @@ snow sql -q "SELECT * FROM SNOWFLAKE_LEARNING_DB.PATENT_INTELLIGENCE.PATENTS LIM
 
 # Check table schema
 snow sql -q "DESCRIBE TABLE SNOWFLAKE_LEARNING_DB.PATENT_INTELLIGENCE.PATENTS"
+
+# Count patents by company
+snow sql -q "SELECT search_query, COUNT(*) FROM PATENTS GROUP BY search_query"
+```
+
+**PATENTS Table Schema:**
+| Column | Type | Description |
+|--------|------|-------------|
+| patent_number | VARCHAR | Publication number (e.g., US20260022604A1) |
+| title | VARCHAR | Patent title |
+| abstract | TEXT | Patent abstract |
+| assignee | VARCHAR | Current assignee/owner |
+| inventors | VARIANT | JSON array of inventor names |
+| filing_date | DATE | Application filing date |
+| grant_date | DATE | Grant date (if granted) |
+| cpc_codes | VARIANT | JSON array of CPC classification codes |
+| search_query | VARCHAR | Original search term used to find this patent |
+| category | VARCHAR | Category label (competitor, technology) |
+| created_at | TIMESTAMP | When record was cached |
+| updated_at | TIMESTAMP | Last update timestamp |
+
+### Data Loading Utilities
+
+Load patents into Snowflake cache using batch utilities:
+
+```python
+from tools import (
+    load_competitor_patents,   # Load patents for one company
+    load_all_competitors,      # Load patents for all tracked competitors
+    load_technology_patents,   # Load patents by technology keyword
+    load_all_technologies,     # Load patents for all tracked technologies
+    get_create_table_sql,      # Get CREATE TABLE statement
+)
+
+# Load patents for a specific competitor
+load_competitor_patents("Allegion", limit=50, execute=True)
+
+# Load all competitors at once
+results = load_all_competitors(limit_per_company=20, execute=True)
+# Returns: {'Allegion': 13, 'Dormakaba': 18, ...}
+
+# Load by technology keyword
+load_technology_patents("smart lock", limit=30, execute=True)
 ```
 
 ### Google Patents BigQuery
@@ -315,17 +358,39 @@ Implement features only when needed, not speculatively.
 
 ### API Configuration
 
-The USPTO API requires an API key set in environment:
+The USPTO API requires an API key. The system checks in this order:
+1. Environment variable `USPTO_API_KEY`
+2. `.env` file in project root
+
+**Setup:**
 ```bash
-export USPTO_API_KEY=your-key-here
+# Copy the example and add your key
+cp .env.example .env
+# Edit .env and set USPTO_API_KEY=your-actual-key
 ```
 
-Or in `.env` file:
-```
-USPTO_API_KEY=your-key-here
+**Verify configuration:**
+```bash
+python3 -c "from tools.patent_search import _get_api_key; print('OK' if _get_api_key() else 'Missing')"
 ```
 
 Get a key at: https://data.uspto.gov/key/myapikey
+
+### MCP Tools (Snowflake)
+
+Snowflake MCP tools are available for direct database operations:
+
+| Tool | Purpose |
+|------|---------|
+| `mcp__snowflake__run_snowflake_query` | Execute SQL queries |
+| `mcp__snowflake__create_object` | Create tables, schemas, etc. |
+| `mcp__snowflake__describe_object` | Get object metadata |
+| `mcp__snowflake__list_objects` | List tables, schemas, etc. |
+
+**Note:** Use `ToolSearch` to load these tools before first use:
+```
+ToolSearch query: "+snowflake query"
+```
 
 ## Key Commands
 
@@ -348,13 +413,15 @@ patent-intelligence/
 │   ├── __init__.py           # Public exports (COMPETITORS, TECHNOLOGIES, etc.)
 │   ├── patent_search.py      # USPTO/Google Patents API wrapper
 │   ├── snowflake_queries.py  # SQL query builders + cache utilities
-│   └── analysis_workflow.py  # Analysis session management + report generation
+│   ├── analysis_workflow.py  # Analysis session management + report generation
+│   └── data_loader.py        # Batch loading utilities for Snowflake
 ├── docs/                     # Documentation
 │   └── GOOGLE_PATENTS_BIGQUERY_ERD.md  # BigQuery schema & ERD
 ├── analysis/                 # Analysis session outputs
 ├── reports/                  # Generated markdown reports
 ├── tests/                    # Unit tests
-├── .env                      # API keys (not committed)
+├── .env                      # API keys (USPTO_API_KEY required)
+├── .env.example              # Template for .env file
 └── CLAUDE.md                 # This file
 ```
 

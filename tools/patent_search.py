@@ -264,15 +264,23 @@ def _format_uspto_patent(app: dict) -> Optional[dict]:
     if filing_date and "T" in filing_date:
         filing_date = filing_date.split("T")[0]
 
+    # Extract CPC codes if available
+    cpc_codes = []
+    for cpc in meta.get("cpcClassificationBag", []):
+        if isinstance(cpc, dict) and cpc.get("cpcClassificationText"):
+            cpc_codes.append(cpc["cpcClassificationText"])
+        elif isinstance(cpc, str):
+            cpc_codes.append(cpc)
+
     return {
-        "patent_number": meta.get("applicationNumberText", ""),
+        "patent_number": meta.get("earliestPublicationNumber", ""),
         "title": meta.get("inventionTitle", ""),
         "abstract": "",  # ODP search doesn't include abstract
         "assignee": assignee,
         "inventors": inventors,
         "filing_date": filing_date,
         "grant_date": None,  # Would need separate lookup
-        "cpc_codes": [],
+        "cpc_codes": cpc_codes,
         "status_code": meta.get("applicationStatusCode"),
     }
 
