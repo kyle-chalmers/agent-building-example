@@ -15,7 +15,7 @@
   - GET /v2/Search/ProductList - search products
   - GET /v3/Product/CadDataAvailability - check formats
   - POST /v3/Product/cadRequest - request download
-- Has ASSA ABLOY models directly
+- Has major manufacturer models
 - Applied for access (waiting for approval)
 
 ## USPTO Patent Data (DEPRECATED)

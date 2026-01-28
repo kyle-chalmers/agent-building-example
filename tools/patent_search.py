@@ -26,7 +26,7 @@ SAMPLE_PATENTS = {
             "patent_number": "US20250001234A1",
             "title": "Multi-factor authentication door access control system",
             "abstract": "A door access control system that combines biometric verification with mobile credentials...",
-            "assignee": "ASSA ABLOY Global Solutions AB",
+            "assignee": "Example Corp Global Solutions AB",
             "inventors": ["Erik Lindqvist", "Anna Svensson"],
             "filing_date": "2025-09-03",
             "grant_date": None,
@@ -36,7 +36,7 @@ SAMPLE_PATENTS = {
             "patent_number": "US20250005678A1",
             "title": "Beacon circuit for use with electronic locks",
             "abstract": "An electronic lock system with integrated beacon circuitry for proximity detection...",
-            "assignee": "ASSA ABLOY AB",
+            "assignee": "Example Corp AB",
             "inventors": ["Johan Berg"],
             "filing_date": "2025-08-07",
             "grant_date": None,
@@ -108,7 +108,7 @@ def search_by_assignee(company: str, limit: int = 50) -> list[dict]:
     """Search patents by assignee/company name.
 
     Args:
-        company: Company name to search for (e.g., "ASSA ABLOY", "Allegion")
+        company: Company name to search for (e.g., "Allegion", "Dormakaba")
         limit: Maximum number of results to return
 
     Returns:

@@ -34,7 +34,7 @@ from tools.data_loader import (
     get_create_table_sql,
 )
 
-# ASSA ABLOY competitors for quick reference
+# Competitors for quick reference (configure for your company)
 COMPETITORS = [
     "Allegion",
     "Dormakaba",

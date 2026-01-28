@@ -1,7 +1,7 @@
 # Planning Context & Decision Log
 
 ## Original Request
-Build an agent demo for ASSA ABLOY that demonstrates:
+Build an agent demo that demonstrates:
 1. API integration for CAD/design search
 2. Snowflake database for metadata storage
 3. S3/local storage for downloaded files
@@ -13,12 +13,12 @@ Build an agent demo for ASSA ABLOY that demonstrates:
 - **GrabCAD**: No public API for library access
 - **TraceParts**: Has API but requires approval (not available for tomorrow's demo)
 - **USPTO PEDS**: Retired March 2025 (ped.uspto.gov no longer resolves)
-- **Google Patents**: Free, no API key, relevant to ASSA ABLOY (competitive intelligence)
+- **Google Patents**: Free, no API key, relevant for competitive intelligence
 
-### Decision 2: Snowflake-First Architecture
-- Query Snowflake before making external API calls
-- Cache results to avoid redundant API calls
-- Enables fast repeat queries and trend analysis
+### Decision 2: API-First Architecture
+- USPTO API is the source of truth for most current data
+- Cache results in Snowflake for repeat queries and trends
+- Ask clarifying questions when results are large (>50 patents)
 
 ### Decision 3: Local Markdown Reports (not S3)
 - Easier to demo and share

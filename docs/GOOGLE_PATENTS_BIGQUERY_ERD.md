@@ -311,7 +311,7 @@ WHERE d.doc_number = '10123456'
 
 ---
 
-## Recommended Approach for ASSA ABLOY Competitive Analysis
+## Recommended Approach for Competitive Analysis
 
 **Primary table: `patents.publications`** - Use this for most queries. It's denormalized (no joins needed) and optimized for searches by assignee, CPC codes, and dates. The `assignee_harmonized` field provides clean company names.
 

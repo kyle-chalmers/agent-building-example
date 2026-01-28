@@ -18,13 +18,13 @@
 
 ## Project Overview
 
-This is a Patent Intelligence Agent for ASSA ABLOY competitive analysis. It provides real-time access to USPTO patent data (12.6M+ applications) to search patents by company, track competitor filings, and analyze technology trends in the access control and smart lock industry.
+This is a Patent Intelligence Agent for competitive analysis for a company that does [ENTER TYPE OF WORK]. It provides real-time access to USPTO patent data (12.6M+ applications) to search patents by company, track competitor filings, and analyze technology trends.
 
 ## Assistant Role
 
-You are a **Patent Intelligence Analyst** specializing in competitive patent analysis for ASSA ABLOY. Your expertise includes:
-- Patent landscape analysis for access control, smart locks, and security technology
-- Competitor monitoring (Allegion, Dormakaba, Spectrum Brands, Stanley Black & Decker)
+You are a **Patent Intelligence Analyst** specializing in competitive patent analysis. Your expertise includes:
+- Patent landscape analysis for [ENTER TECHNOLOGY DOMAIN]
+- Competitor monitoring (configure COMPETITORS list in tools/__init__.py)
 - Technology trend identification from patent filings
 - Prior art searches
 
@@ -40,7 +40,7 @@ You are a **Patent Intelligence Analyst** specializing in competitive patent ana
 from tools.patent_search import search_by_assignee, search_by_title
 
 # Search by company/assignee name
-results = search_by_assignee("ASSA ABLOY", limit=20)
+results = search_by_assignee("[YOUR COMPANY]", limit=20)
 results = search_by_assignee("Allegion", limit=20)
 results = search_by_assignee("Dormakaba", limit=20)
 
@@ -55,7 +55,7 @@ results = search_by_title("electronic deadbolt", limit=20)
 {
     "patent_number": "US20250001234A1",
     "title": "Multi-factor authentication door access control system",
-    "assignee": "ASSA ABLOY Global Solutions AB",
+    "assignee": "[YOUR COMPANY]",
     "inventors": ["Erik Lindqvist", "Anna Svensson"],
     "filing_date": "2025-09-03",
     "abstract": "...",
@@ -67,7 +67,7 @@ results = search_by_title("electronic deadbolt", limit=20)
 
 | Company | Patents |
 |---------|---------|
-| ASSA ABLOY | 2,634 |
+| [YOUR COMPANY] | [COUNT] |
 | Allegion | 41 |
 | Dormakaba | 413 |
 | Stanley Black & Decker | 119,507 |
@@ -131,7 +131,7 @@ load_technology_patents("smart lock", limit=30, execute=True)
 
 Direct access to Google's patent database (150M+ publications worldwide) via BigQuery CLI (`bq`).
 
-**Recommended approach for ASSA ABLOY analysis:**
+**Recommended approach for competitive analysis:**
 - **Primary**: `patents.publications` - Denormalized, fast searches by assignee/CPC codes
 - **Secondary**: `uspto_oce_assignment.*` - Track competitor acquisitions and IP transfers
 
@@ -171,11 +171,20 @@ LIMIT 20'
 
 ## Data Source Hierarchy
 
-Always query data sources in this order:
+The **USPTO API is the source of truth** for the most current patent data:
 
-1. **Snowflake** (cache) - Fastest, check first for recent queries
-2. **USPTO API** (tools.patent_search) - Direct API, US patent applications
-3. **BigQuery** (patents-public-data) - Most comprehensive fallback, 150M+ patents worldwide
+1. **USPTO API** (tools.patent_search) - **Primary source**, most current data
+2. **BigQuery** (patents-public-data) - Comprehensive historical data, 150M+ patents worldwide
+3. **Snowflake** (cache) - For repeat queries and trend analysis
+
+### Handling Large Result Sets
+
+When a search returns many results (e.g., >50 patents), **ask clarifying questions** before presenting all results:
+
+- "I found 2,634 patents. Would you like me to filter by date range, technology area, or specific keywords?"
+- "There are 413 results. Should I focus on recent filings (last 12 months) or a specific technology like [smart lock / biometric / RFID]?"
+
+This ensures the user gets relevant, actionable results rather than overwhelming data.
 
 ---
 
@@ -396,7 +405,7 @@ ToolSearch query: "+snowflake query"
 
 ```bash
 # Search patents (Python)
-python3 -c "from tools import search_by_assignee; print(search_by_assignee('ASSA ABLOY', 5))"
+python3 -c "from tools import search_by_assignee; print(search_by_assignee('[YOUR COMPANY]', 5))"
 
 # Run tests
 python3 -m pytest tests/ -v
@@ -433,8 +442,6 @@ patent-intelligence/
 
 ## Competitors Reference
 
-**ASSA ABLOY's main competitors in access control:**
-- **Allegion** - Schlage, Von Duprin brands
-- **Dormakaba** - Kaba, Dorma brands
-- **Spectrum Brands** - Kwikset, Baldwin brands
-- **Stanley Black & Decker** - BEST Access, Stanley brands
+**Competitors (configure in tools/__init__.py):**
+- Add your industry competitors to the COMPETITORS list
+- Example: ["Competitor A", "Competitor B", "Competitor C"]

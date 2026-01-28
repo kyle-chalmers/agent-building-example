@@ -17,7 +17,6 @@
 3. Updated `CLAUDE.md` - Available tools section for agents
 
 **Results:**
-- ASSA ABLOY: 2,634 patents
 - Allegion: 41 patents
 - Dormakaba: 413 patents
 - Total database: 12.6M+ patent applications

@@ -1,4 +1,4 @@
-# Patent Intelligence Agent Demo for ASSA ABLOY
+# Patent Intelligence Agent Demo
 
 ## Overview
 Build an intelligent agent that searches USPTO patent data for door hardware, locks, and access control innovations. The agent uses Snowflake as its primary data source, falling back to USPTO API only when needed. Reports are generated locally as markdown files.

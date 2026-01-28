@@ -1,6 +1,6 @@
 # Patent Intelligence Agent
 
-An intelligent agent for competitive patent analysis in the door hardware and security industry. Built as a demo for ASSA ABLOY.
+An intelligent agent for competitive patent analysis. Template for a company that does [ENTER TYPE OF WORK].
 
 ## Features
 - Search USPTO patents by company or technology keywords
@@ -22,12 +22,12 @@ cp .env.example .env
 claude
 ```
 
-Then ask: *"Find the latest lock patent filed by a competitor of ASSA ABLOY"*
+Then ask: *"Find the latest patents filed by a competitor"*
 
 ## Demo Flow
 
 ### 1. Show the Configuration
-Open `CLAUDE.md` to show how the agent understands ASSA ABLOY's competitive landscape.
+Open `CLAUDE.md` to show how the agent understands your competitive landscape.
 
 ### 2. Natural Language Search
 Ask: *"Find recent smart lock patents from Allegion"*
@@ -69,18 +69,27 @@ User Query → Claude Code → Check Snowflake
                          USPTO API → Store in Snowflake → Return Results
 ```
 
-## ASSA ABLOY Competitors Tracked
-- Allegion (Schlage)
-- Dormakaba
-- Spectrum Brands (Kwikset, Weiser)
-- Stanley Black & Decker
+## Competitors Tracked
+
+Configure in `tools/__init__.py`:
+```python
+COMPETITORS = [
+    "Competitor A",
+    "Competitor B",
+    # Add your competitors here
+]
+```
 
 ## Technologies of Interest
-- Smart locks, electronic locks
-- Biometric access (fingerprint, facial recognition)
-- RFID/NFC access control
-- Keyless entry systems
-- Mobile credentials
+
+Configure in `tools/__init__.py`:
+```python
+TECHNOLOGIES = [
+    "keyword 1",
+    "keyword 2",
+    # Add your technology keywords here
+]
+```
 
 ## Project Structure
 ```
@@ -116,4 +125,4 @@ pytest tests/ -v
 ```
 
 ## License
-Demo project for ASSA ABLOY workshop
+Demo project - configure for your company
