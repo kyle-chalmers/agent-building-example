@@ -426,9 +426,16 @@ def _format_uspto_patent(app: dict) -> Optional[dict]:
         elif isinstance(cpc, str):
             cpc_codes.append(cpc)
 
+    # USPTO search payloads often omit applicationNumberText; confirmation number is a stable fallback.
+    application_number = (
+        meta.get("applicationNumberText")
+        or meta.get("applicationConfirmationNumber")
+        or ""
+    )
+
     return {
         "patent_number": meta.get("earliestPublicationNumber", ""),
-        "application_number": meta.get("applicationNumberText", ""),
+        "application_number": application_number,
         "title": meta.get("inventionTitle", ""),
         "abstract": "",  # ODP search doesn't include abstract
         "assignee": assignee,

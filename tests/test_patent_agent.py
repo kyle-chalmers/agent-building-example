@@ -175,6 +175,28 @@ def test_format_uspto_patent_includes_new_fields():
     assert patent["uspto_metadata"]["applicationNumberText"] == "17123456"
 
 
+def test_format_uspto_patent_application_number_fallback():
+    """When applicationNumberText is absent, use applicationConfirmationNumber."""
+    from tools.patent_search import _format_uspto_patent
+
+    app = {
+        "applicationMetaData": {
+            "applicationConfirmationNumber": "12345678",
+            "earliestPublicationNumber": "US20240123456A1",
+            "inventionTitle": "Test",
+            "applicationStatusCode": 30,
+            "filingDate": "2024-01-15T00:00:00Z",
+            "applicantBag": [],
+            "inventorBag": [],
+            "cpcClassificationBag": [],
+        }
+    }
+
+    patent = _format_uspto_patent(app)
+    assert patent is not None
+    assert patent["application_number"] == "12345678"
+
+
 def test_backfill_uspto_metadata_counts():
     """Test backfill attempts/enriches rows and calls upsert execution."""
     from tools.data_loader import backfill_uspto_metadata

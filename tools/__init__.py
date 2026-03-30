@@ -33,6 +33,7 @@ from tools.data_loader import (
     load_all_competitors,
     load_all_technologies,
     backfill_uspto_metadata,
+    sync_application_number_from_uspto_metadata,
     get_create_table_sql,
 )
 
@@ -83,6 +84,7 @@ __all__ = [
     "load_all_competitors",
     "load_all_technologies",
     "backfill_uspto_metadata",
+    "sync_application_number_from_uspto_metadata",
     "get_create_table_sql",
     # Constants
     "COMPETITORS",

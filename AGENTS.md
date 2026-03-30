@@ -234,7 +234,7 @@ snow sql -q "SELECT search_query, COUNT(*) FROM PATENTS GROUP BY search_query"
 | Column | Type | Description |
 |--------|------|-------------|
 | patent_number | VARCHAR | Publication number (e.g., US20260022604A1) |
-| application_number | VARCHAR | USPTO application number |
+| application_number | VARCHAR | USPTO application number (`applicationNumberText`, or `applicationConfirmationNumber` if absent) |
 | title | VARCHAR | Patent title |
 | abstract | TEXT | Patent abstract |
 | assignee | VARCHAR | Current assignee/owner |

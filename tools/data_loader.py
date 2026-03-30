@@ -136,6 +136,34 @@ def _execute_snowflake_sql(sql: str) -> Optional[str]:
         return None
 
 
+def sync_application_number_from_uspto_metadata(execute: bool = False) -> Optional[str]:
+    """Fill empty `application_number` from cached `uspto_metadata` VARIANT.
+
+    USPTO search responses often omit `applicationNumberText` but include
+    `applicationConfirmationNumber`. This updates existing rows without
+    calling the API again.
+
+    Args:
+        execute: If True, run UPDATE via snow CLI.
+
+    Returns:
+        snow CLI stdout on success, None on failure or when execute is False.
+    """
+    sql = """
+        UPDATE SNOWFLAKE_LEARNING_DB.PATENT_INTELLIGENCE.PATENTS
+        SET application_number = COALESCE(
+            NULLIF(TRIM(application_number), ''),
+            NULLIF(TRIM(uspto_metadata:applicationNumberText::STRING), ''),
+            NULLIF(TRIM(uspto_metadata:applicationConfirmationNumber::STRING), '')
+        )
+        WHERE uspto_metadata IS NOT NULL
+          AND (application_number IS NULL OR TRIM(application_number) = '');
+    """
+    if not execute:
+        return None
+    return _execute_snowflake_sql(sql)
+
+
 def backfill_uspto_metadata(
     batch_size: int = 100,
     max_records: Optional[int] = None,
@@ -144,8 +172,11 @@ def backfill_uspto_metadata(
 ) -> dict[str, int]:
     """Backfill missing USPTO fields for existing cached patents.
 
-    This process is idempotent: it only targets rows missing newly added
-    USPTO-derived fields and uses MERGE upserts per record.
+    This process is idempotent: it only targets rows missing enrichable
+    USPTO-derived fields (`status_code`, `uspto_metadata`) and uses MERGE
+    upserts per record. `application_number` is not used in the filter so
+    we do not loop forever when USPTO omits `applicationNumberText` but
+    still provides confirmation numbers via normalization.
 
     Args:
         batch_size: Number of candidate rows to fetch from Snowflake per batch.
@@ -156,13 +187,15 @@ def backfill_uspto_metadata(
     Returns:
         Counters for attempted, enriched, skipped, failed.
     """
+    if execute:
+        sync_application_number_from_uspto_metadata(execute=True)
+
     counters = {"attempted": 0, "enriched": 0, "skipped": 0, "failed": 0}
     while True:
         select_sql = f"""
             SELECT patent_number, search_query, category
             FROM SNOWFLAKE_LEARNING_DB.PATENT_INTELLIGENCE.PATENTS
-            WHERE application_number IS NULL
-               OR status_code IS NULL
+            WHERE status_code IS NULL
                OR uspto_metadata IS NULL
             ORDER BY updated_at ASC
             LIMIT {batch_size}
@@ -172,6 +205,7 @@ def backfill_uspto_metadata(
         if not rows:
             break
 
+        batch_enriched = 0
         for row in rows:
             patent_number = row.get("PATENT_NUMBER") or row.get("patent_number")
             if not patent_number:
@@ -198,8 +232,12 @@ def backfill_uspto_metadata(
                     continue
 
             counters["enriched"] += 1
+            batch_enriched += 1
             if sleep_seconds > 0:
                 time.sleep(sleep_seconds)
+
+        if batch_enriched == 0:
+            break
 
     return counters
 
