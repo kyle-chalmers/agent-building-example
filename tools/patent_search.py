@@ -146,7 +146,9 @@ def search_by_assignee(company: str, limit: int = 50) -> list[dict]:
         List of patent dictionaries
     """
     # Try USPTO ODP API first (primary source)
-    results = _search_uspto_odp(company, limit)
+    # Use field-specific query to search applicant name directly
+    assignee_query = f'applicationMetaData.applicantBag.applicantNameText:"{company}"'
+    results = _search_uspto_odp(assignee_query, limit)
     if results:
         return results
 
@@ -173,7 +175,9 @@ def search_by_title(keywords: str, limit: int = 50) -> list[dict]:
         List of patent dictionaries
     """
     # Try USPTO ODP API first (primary source)
-    results = _search_uspto_odp(keywords, limit)
+    # Use field-specific query to search invention title directly
+    title_query = f'applicationMetaData.inventionTitle:({keywords})'
+    results = _search_uspto_odp(title_query, limit)
     if results:
         return results
 
@@ -424,6 +428,7 @@ def _format_uspto_patent(app: dict) -> Optional[dict]:
 
     return {
         "patent_number": meta.get("earliestPublicationNumber", ""),
+        "application_number": meta.get("applicationNumberText", ""),
         "title": meta.get("inventionTitle", ""),
         "abstract": "",  # ODP search doesn't include abstract
         "assignee": assignee,
@@ -432,6 +437,7 @@ def _format_uspto_patent(app: dict) -> Optional[dict]:
         "grant_date": None,  # Would need separate lookup
         "cpc_codes": cpc_codes,
         "status_code": meta.get("applicationStatusCode"),
+        "uspto_metadata": meta,
     }
 
 
@@ -520,6 +526,7 @@ def _format_google_patent(patent: dict) -> dict:
 
     return {
         "patent_number": patent.get("publication_number", ""),
+        "application_number": "",
         "title": patent.get("title", "").strip(),
         "abstract": patent.get("snippet", "").replace("&hellip;", "..."),
         "assignee": assignee,
@@ -527,6 +534,8 @@ def _format_google_patent(patent: dict) -> dict:
         "filing_date": patent.get("filing_date"),
         "grant_date": patent.get("grant_date"),
         "cpc_codes": [],
+        "status_code": None,
+        "uspto_metadata": None,
     }
 
 

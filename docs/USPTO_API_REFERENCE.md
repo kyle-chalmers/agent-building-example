@@ -175,6 +175,7 @@ The `tools.patent_search` module normalizes USPTO responses to this format:
 | Field | Type | Description |
 |-------|------|-------------|
 | `patent_number` | string | Publication number (e.g., "US20240123456A1") |
+| `application_number` | string | USPTO application number (e.g., "17123456") |
 | `title` | string | Invention title |
 | `abstract` | string | Patent abstract (may be empty from search) |
 | `assignee` | string | Current assignee/applicant |
@@ -183,6 +184,7 @@ The `tools.patent_search` module normalizes USPTO responses to this format:
 | `grant_date` | string | Grant date if granted (YYYY-MM-DD or null) |
 | `cpc_codes` | list[string] | CPC classification codes |
 | `status_code` | integer | Application status code |
+| `uspto_metadata` | object/null | Raw `applicationMetaData` payload for traceability/backfill |
 
 ### Application Status Codes
 
