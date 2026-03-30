@@ -125,6 +125,107 @@ def test_build_upsert_query():
     assert "Test Patent" in query
 
 
+def test_build_upsert_query_includes_new_uspto_fields():
+    """Test MERGE includes application_number/status_code/uspto_metadata."""
+    from tools import build_upsert_query
+
+    patent_data = {
+        "patent_number": "US123456",
+        "application_number": "17123456",
+        "title": "Test Patent",
+        "abstract": "Test abstract",
+        "assignee": "Test Corp",
+        "inventors": ["John Doe"],
+        "filing_date": "2024-01-01",
+        "grant_date": None,
+        "cpc_codes": [],
+        "status_code": 30,
+        "uspto_metadata": {"applicationNumberText": "17123456"},
+    }
+
+    query = build_upsert_query(patent_data, "test query", "competitor")
+
+    assert "application_number" in query
+    assert "status_code" in query
+    assert "uspto_metadata" in query
+    assert "17123456" in query
+
+
+def test_format_uspto_patent_includes_new_fields():
+    """Test USPTO formatter maps application_number and metadata."""
+    from tools.patent_search import _format_uspto_patent
+
+    app = {
+        "applicationMetaData": {
+            "applicationNumberText": "17123456",
+            "earliestPublicationNumber": "US20240123456A1",
+            "inventionTitle": "Smart Lock",
+            "applicationStatusCode": 30,
+            "filingDate": "2024-01-15T00:00:00Z",
+            "applicantBag": [{"applicantNameText": "Test Corp"}],
+            "inventorBag": [{"inventorNameText": "Jane Doe"}],
+            "cpcClassificationBag": [{"cpcClassificationText": "E05B47/00"}],
+        }
+    }
+
+    patent = _format_uspto_patent(app)
+    assert patent is not None
+    assert patent["application_number"] == "17123456"
+    assert patent["status_code"] == 30
+    assert patent["uspto_metadata"]["applicationNumberText"] == "17123456"
+
+
+def test_format_uspto_patent_application_number_fallback():
+    """When applicationNumberText is absent, use applicationConfirmationNumber."""
+    from tools.patent_search import _format_uspto_patent
+
+    app = {
+        "applicationMetaData": {
+            "applicationConfirmationNumber": "12345678",
+            "earliestPublicationNumber": "US20240123456A1",
+            "inventionTitle": "Test",
+            "applicationStatusCode": 30,
+            "filingDate": "2024-01-15T00:00:00Z",
+            "applicantBag": [],
+            "inventorBag": [],
+            "cpcClassificationBag": [],
+        }
+    }
+
+    patent = _format_uspto_patent(app)
+    assert patent is not None
+    assert patent["application_number"] == "12345678"
+
+
+def test_backfill_uspto_metadata_counts():
+    """Test backfill attempts/enriches rows and calls upsert execution."""
+    from tools.data_loader import backfill_uspto_metadata
+
+    rows = [{"PATENT_NUMBER": "US123", "SEARCH_QUERY": "Allegion", "CATEGORY": "competitor"}]
+
+    with patch("tools.data_loader._query_snowflake_rows", side_effect=[rows, []]), \
+         patch("tools.data_loader.get_patent", return_value={
+             "patent_number": "US123",
+             "application_number": "17123456",
+             "title": "T",
+             "abstract": "",
+             "assignee": "A",
+             "inventors": [],
+             "filing_date": "2024-01-01",
+             "grant_date": None,
+             "cpc_codes": [],
+             "status_code": 30,
+             "uspto_metadata": {"applicationNumberText": "17123456"},
+         }), \
+         patch("tools.data_loader._execute_snowflake_sql", return_value="ok"), \
+         patch("tools.data_loader.time.sleep"):
+        result = backfill_uspto_metadata(batch_size=1, execute=True, sleep_seconds=0)
+
+    assert result["attempted"] == 1
+    assert result["enriched"] == 1
+    assert result["failed"] == 0
+
+
 def test_get_trends_query():
     """Test trends query generation."""
     from tools import get_trends_query

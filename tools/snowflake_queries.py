@@ -75,11 +75,18 @@ def build_upsert_query(patent_data: dict, search_query: str, category: str) -> s
     """
     inventors_json = json.dumps(patent_data.get("inventors", []))
     cpc_json = json.dumps(patent_data.get("cpc_codes", []))
+    uspto_metadata_json = json.dumps(patent_data.get("uspto_metadata"))
+    status_code = patent_data.get("status_code")
+    uspto_metadata_sql = "NULL"
+    if patent_data.get("uspto_metadata") is not None:
+        uspto_metadata_escaped = uspto_metadata_json.replace("'", "''")
+        uspto_metadata_sql = f"PARSE_JSON('{uspto_metadata_escaped}')"
 
     return f"""
         MERGE INTO SNOWFLAKE_LEARNING_DB.PATENT_INTELLIGENCE.PATENTS AS target
         USING (SELECT
             '{patent_data["patent_number"]}' AS patent_number,
+            '{patent_data.get("application_number", "")}' AS application_number,
             '{patent_data["title"].replace("'", "''")}' AS title,
             '{(patent_data.get("abstract") or "").replace("'", "''")}' AS abstract,
             '{patent_data["assignee"]}' AS assignee,
@@ -87,11 +94,14 @@ def build_upsert_query(patent_data: dict, search_query: str, category: str) -> s
             '{patent_data["filing_date"]}' AS filing_date,
             {f"'{patent_data['grant_date']}'" if patent_data.get("grant_date") else "NULL"} AS grant_date,
             PARSE_JSON('{cpc_json}') AS cpc_codes,
+            {status_code if status_code is not None else "NULL"} AS status_code,
+            {uspto_metadata_sql} AS uspto_metadata,
             '{search_query}' AS search_query,
             '{category}' AS category
         ) AS source
         ON target.patent_number = source.patent_number
         WHEN MATCHED THEN UPDATE SET
+            application_number = source.application_number,
             title = source.title,
             abstract = source.abstract,
             assignee = source.assignee,
@@ -99,16 +109,18 @@ def build_upsert_query(patent_data: dict, search_query: str, category: str) -> s
             filing_date = source.filing_date,
             grant_date = source.grant_date,
             cpc_codes = source.cpc_codes,
+            status_code = source.status_code,
+            uspto_metadata = source.uspto_metadata,
             search_query = source.search_query,
             category = source.category,
             updated_at = CURRENT_TIMESTAMP()
         WHEN NOT MATCHED THEN INSERT (
-            patent_number, title, abstract, assignee, inventors,
-            filing_date, grant_date, cpc_codes, search_query, category,
+            patent_number, application_number, title, abstract, assignee, inventors,
+            filing_date, grant_date, cpc_codes, status_code, uspto_metadata, search_query, category,
             created_at, updated_at
         ) VALUES (
-            source.patent_number, source.title, source.abstract, source.assignee,
-            source.inventors, source.filing_date, source.grant_date, source.cpc_codes,
+            source.patent_number, source.application_number, source.title, source.abstract, source.assignee,
+            source.inventors, source.filing_date, source.grant_date, source.cpc_codes, source.status_code, source.uspto_metadata,
             source.search_query, source.category, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP()
         );
     """
